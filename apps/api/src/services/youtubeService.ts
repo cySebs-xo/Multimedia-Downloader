@@ -132,12 +132,17 @@ class YouTubeService {
       throw Object.assign(new Error('No streaming_data available. Use yt-dlp fallback.'), { code: 'DOWNLOAD_FAILED' });
     }
 
+    // youtubei.js only outputs mp4 for progressive streams; webm must go through yt-dlp
+    if (format === 'webm') {
+      throw Object.assign(new Error('youtubei.js does not output webm; falling back to yt-dlp'), { code: 'DOWNLOAD_FAILED' });
+    }
+
     const rawTitle = info.basic_info.title || `youtube_${videoId}`;
     const cleanTitle = rawTitle.replace(/[/\\?%*:|"<>]/g, '_');
 
     const streamOpts = { type: 'video+audio' as const, quality };
-    const ext = format === 'webm' ? 'webm' : 'mp4';
-    const contentTypeV = format === 'webm' ? 'video/webm' : 'video/mp4';
+    const ext = 'mp4';
+    const contentTypeV = 'video/mp4';
 
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(cleanTitle)}.${ext}"`);
     res.setHeader('Content-Type', contentTypeV);
