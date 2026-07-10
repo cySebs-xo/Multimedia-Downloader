@@ -261,10 +261,27 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
   }
 }
 
-export async function downloadMedia(url: string, formatId: string, outputPath: string, platform: string, mergeFormat?: string): Promise<string> {
+export async function downloadMedia(url: string, formatId: string, outputPath: string, platform: string, mergeFormat?: string, recode?: string): Promise<string> {
   const ytDlpPath = getYtDlpPath();
   const isMerged = formatId.includes('+');
   const mf = mergeFormat || 'mp4';
+
+  if (recode) {
+    // --recode-video re-encodes to target format if needed, handles merging internally
+    const args = [...buildPlatformArgs(platform), '-f', formatId, '-o', `${outputPath}.%(ext)s`, '--recode-video', recode, url];
+    logger.debug(`Spawning: ${ytDlpPath} ${args.join(' ')}`);
+    try {
+      await spawnYtDlp(ytDlpPath, args, 300_000);
+      return outputPath;
+    } catch (err) {
+      const error = err as Error & { code?: string };
+      if (!error.code) {
+        throw Object.assign(new Error('Error al descargar el archivo multimedia.'), { code: 'DOWNLOAD_FAILED' });
+      }
+      throw error;
+    }
+  }
+
   const args = isMerged
     ? [...buildPlatformArgs(platform), '-f', formatId, '-o', `${outputPath}.%(ext)s`, '--merge-output-format', mf, url]
     : [...buildPlatformArgs(platform), '-f', formatId, '-o', outputPath, url];

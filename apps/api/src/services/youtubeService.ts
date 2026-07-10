@@ -145,10 +145,9 @@ class YouTubeService {
       const tempId = crypto.randomUUID();
       const rawPath = path.join(TEMP_DIR, `${tempId}_raw`);
 
-      // Use webm-compatible format: prefer webm codecs, fall back to any
-      const webmFormatId = 'bestvideo[ext=webm]+bestaudio[ext=webm]/bestvideo+bestaudio/best';
-
-      await downloadMedia(url, webmFormatId, rawPath, 'youtube', 'webm');
+      // --recode-video webm re-encodes whatever yt-dlp downloads into WebM,
+      // handling both native VP9/Opus (fast remux) and H.264/AAC (transcode)
+      await downloadMedia(url, 'bestvideo+bestaudio/best', rawPath, 'youtube', 'mp4', 'webm');
 
       let finalPath = rawPath;
       if (!fs.existsSync(rawPath)) {
