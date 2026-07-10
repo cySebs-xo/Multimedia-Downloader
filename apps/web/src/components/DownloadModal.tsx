@@ -24,7 +24,7 @@ type Props = {
   onClose: () => void;
 };
 
-const VIDEO_EXTS = ['mp4', 'webm'] as const;
+const VIDEO_EXTS = ['mp4'] as const;
 const AUDIO_EXTS = ['mp3', 'wav'] as const;
 
 function formatBytes(bytes: number): string {
@@ -106,7 +106,7 @@ export default function DownloadModal({ entry, onStartDownload, onCancelDownload
     onStartDownload(entry.id, {
       url: entry.url,
       type: target.type,
-      format: selectedFormat as 'mp4' | 'webm' | 'mp3' | 'wav',
+      format: selectedFormat as 'mp4' | 'mp3' | 'wav',
       quality: selectedQuality,
       formatId,
     });

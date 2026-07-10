@@ -2,13 +2,9 @@ import { Innertube, ClientType } from 'youtubei.js';
 import ffmpeg from 'fluent-ffmpeg';
 import { Readable } from 'stream';
 import type { Response } from 'express';
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
 import { logger } from '../utils/logger';
 import type { MediaInfo, VideoFormat, AudioFormat } from '../types/media';
-import { getMediaInfo as ytDlpGetMediaInfo, downloadMedia } from './ytDlpService';
-import { deleteFile } from '../utils/cleanup';
+import { getMediaInfo as ytDlpGetMediaInfo } from './ytDlpService';
 
 function mimeToExt(mime: string): string {
   const match = mime.match(/^[^/]+\/([\w-]+)/);
@@ -119,7 +115,7 @@ class YouTubeService {
   async downloadVideo(
     url: string,
     quality: string,
-    format: 'mp4' | 'webm',
+    format: 'mp4',
     res: Response
   ): Promise<void> {
     const videoId = this.extractVideoId(url);
@@ -138,51 +134,6 @@ class YouTubeService {
 
     const rawTitle = info.basic_info.title || `youtube_${videoId}`;
     const cleanTitle = rawTitle.replace(/[/\\?%*:|"<>]/g, '_');
-
-    // youtubei.js only outputs mp4 for progressive streams; webm must go through yt-dlp
-    if (format === 'webm') {
-      const TEMP_DIR = process.env.TEMP_DIR || './temp';
-      const tempId = crypto.randomUUID();
-      const rawPath = path.join(TEMP_DIR, `${tempId}_raw`);
-
-      // --recode-video webm re-encodes whatever yt-dlp downloads into WebM,
-      // handling both native VP9/Opus (fast remux) and H.264/AAC (transcode)
-      await downloadMedia(url, 'bestvideo+bestaudio/best', rawPath, 'youtube', 'mp4', 'webm');
-
-      let finalPath = rawPath;
-      if (!fs.existsSync(rawPath)) {
-        const dir = path.dirname(rawPath);
-        const base = path.basename(rawPath);
-        const files = fs.readdirSync(dir);
-        const match = files.find(f => f.startsWith(base + '.'));
-        if (match) finalPath = path.join(dir, match);
-      }
-
-      const stats = fs.statSync(finalPath);
-      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(cleanTitle)}.webm"`);
-      res.setHeader('Content-Type', 'video/webm');
-      res.setHeader('Content-Length', stats.size);
-
-      const readStream = fs.createReadStream(finalPath);
-      readStream.pipe(res);
-
-      readStream.on('error', (err) => {
-        logger.error('webm stream error:', err);
-      });
-
-      res.on('close', async () => {
-        await deleteFile(finalPath);
-        const dir = path.dirname(finalPath);
-        const base = path.basename(rawPath);
-        for (const f of fs.readdirSync(dir)) {
-          if (f.startsWith(base + '.') || f.startsWith(base + '_')) {
-            await deleteFile(path.join(dir, f));
-          }
-        }
-      });
-
-      return;
-    }
 
     const streamOpts = { type: 'video+audio' as const, quality };
     const ext = 'mp4';

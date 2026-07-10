@@ -103,7 +103,7 @@ export async function downloadController(
   try {
     if (platform === 'youtube') {
       if (type === 'video') {
-        await youtubeService.downloadVideo(url, quality, format as 'mp4' | 'webm', res);
+        await youtubeService.downloadVideo(url, quality, format as 'mp4', res);
       } else {
         await youtubeService.downloadAudio(url, format as 'mp3' | 'wav', res);
       }
