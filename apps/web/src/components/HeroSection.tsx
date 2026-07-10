@@ -30,7 +30,7 @@ export default function HeroSection() {
 
         <div className="hero-text-content" style={{ flex: '1 1 480px', maxWidth: '700px' }}>
 
-          <h1 className="hero-title" style={{ marginBottom: '1.5rem' }}>
+          <h1 className="hero-title" style={{ marginBottom: '1.5rem', overflowWrap: 'normal', wordBreak: 'keep-all' }}>
             {t.heroStaticTitle}<br />
             <TypewriterWord />
             <span
