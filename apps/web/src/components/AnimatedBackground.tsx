@@ -11,6 +11,8 @@ export default function AnimatedBackground() {
   const rafRef = useRef(0);
 
   useEffect(() => {
+    if (!window.matchMedia('(hover: hover)').matches) return;
+
     const onMouseMove = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
     };
