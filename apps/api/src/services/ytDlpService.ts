@@ -191,7 +191,7 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
       f.vcodec !== '' &&
       !['none', undefined, null].includes(f.acodec) &&
       f.acodec !== '' &&
-      ['mp4', 'webm'].includes(f.ext) &&
+      f.ext === 'mp4' &&
       (f.height != null && f.height > 0)
     );
 
@@ -200,13 +200,13 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
         if (contentType === 'audio') return false;
         return !['none', undefined, null].includes(f.vcodec) &&
                f.vcodec !== '' &&
-               ['mp4', 'webm'].includes(f.ext) &&
+               f.ext === 'mp4' &&
                (f.height != null && f.height > 0);
       })
       .map((f: YtDlpFormat): VideoFormat => ({
         id: f.format_id,
         quality: f.height ? `${f.height}p` : `${f.tbr ? Math.round(f.tbr) : 0}k`,
-        ext: f.ext as 'mp4' | 'webm',
+        ext: 'mp4',
         filesize: f.filesize,
       }))
       .sort((a: VideoFormat, b: VideoFormat) => {
@@ -214,11 +214,6 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
         const bNum = parseInt(b.quality);
         return bNum - aNum;
       });
-
-    if (!videoFormats.some(f => f.ext === 'webm') && videoFormats.length > 0) {
-      const best = videoFormats[0];
-      videoFormats.push({ ...best, ext: 'webm' });
-    }
 
     const pureAudioFormats = data.formats
       .filter((f: YtDlpFormat) => {

@@ -29,7 +29,6 @@ class InstagramService {
         formats: {
           video: [
             { id: 'default', quality: '720p', ext: 'mp4', filesize: null },
-            { id: 'webm', quality: '720p', ext: 'webm', filesize: null },
           ],
           audio: [{ id: 'default', quality: '128kbps', ext: 'mp4' }],
         },
@@ -60,14 +59,13 @@ class InstagramService {
       formats: {
         video: [
           { id: 'default', quality: '720p', ext: 'mp4', filesize: null },
-          { id: 'webm', quality: '720p', ext: 'webm', filesize: null },
         ],
         audio: [{ id: 'default', quality: '128kbps', ext: 'mp4' }],
       },
     };
   }
 
-  async download(_url: string, _format: 'mp4' | 'webm', _res: Response): Promise<void> {
+  async download(_url: string, _format: 'mp4', _res: Response): Promise<void> {
     throw Object.assign(new Error('Instagram download requires yt-dlp fallback.'), { code: 'DOWNLOAD_FAILED' });
   }
 

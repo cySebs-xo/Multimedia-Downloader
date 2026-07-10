@@ -9,7 +9,7 @@ export const translations = {
     themeDarkTooltip: 'Activar modo oscuro',
 
     heroStaticTitle: 'DESCARGA TUS',
-    heroSubtitle: 'RÁPIDO, SIMPLE Y SIN LÍMITES.',
+    heroSubtitle: 'RÁPIDO, SIMPLE Y GRATIS.',
     heroPrivacy: 'No se almacenará tu información ni los videos que descargues.',
     heroPlaceholder: 'Pega aquí el enlace del video o audio...',
     heroPlaceholderMobile: 'Pega el enlace...',
@@ -60,7 +60,7 @@ export const translations = {
     themeDarkTooltip: 'Switch to dark mode',
 
     heroStaticTitle: 'DOWNLOAD YOUR',
-    heroSubtitle: 'FAST, SIMPLE AND LIMITLESS.',
+    heroSubtitle: 'FAST, SIMPLE AND FREE.',
     heroPrivacy: "Your information or the videos you download will not be stored.",
     heroPlaceholder: 'Paste the video or audio link here...',
     heroPlaceholderMobile: 'Paste the link...',

@@ -14,7 +14,6 @@ const TEMP_DIR = process.env.TEMP_DIR || './temp';
 
 const CONTENT_TYPES: Record<string, string> = {
   mp4: 'video/mp4',
-  webm: 'video/webm',
   mp3: 'audio/mpeg',
   wav: 'audio/wav',
 };
@@ -23,7 +22,7 @@ async function handleDiskDownload(
   url: string,
   platform: string,
   formatId: string,
-  format: 'mp4' | 'webm' | 'mp3' | 'wav',
+  format: 'mp4' | 'mp3' | 'wav',
   type: 'video' | 'audio',
   res: Response
 ): Promise<void> {
@@ -93,7 +92,7 @@ export async function downloadController(
   const { url, type, format, formatId, quality } = req.body as {
     url: string;
     type: 'video' | 'audio';
-    format: 'mp4' | 'webm' | 'mp3' | 'wav';
+    format: 'mp4' | 'mp3' | 'wav';
     quality: string;
     formatId: string;
   };
@@ -111,7 +110,7 @@ export async function downloadController(
       if (type === 'audio') {
         await instagramService.downloadAudio(url, format as 'mp3' | 'wav', res);
       } else {
-        await instagramService.download(url, format as 'mp4' | 'webm', res);
+        await instagramService.download(url, format as 'mp4', res);
       }
     } else {
       await handleDiskDownload(url, platform, formatId, format, type, res);
@@ -119,12 +118,12 @@ export async function downloadController(
   } catch (err) {
     if ((platform === 'youtube' || platform === 'instagram') && !res.headersSent) {
       logger.warn(`Fallback to yt-dlp for ${platform}: ${(err as Error).message}`);
-      const isDefault = formatId === 'default' || formatId === 'webm';
+      const isDefault = formatId === 'default';
       let fbFormatId: string;
       if (isDefault) {
         fbFormatId = platform === 'youtube'
           ? type === 'video' ? 'bestvideo+bestaudio/best' : 'bestaudio/best'
-          : format === 'webm' ? 'bestvideo+bestaudio/best' : 'best';
+          : 'best';
       } else if (platform === 'youtube' && type === 'video' && !formatId.includes('+')) {
         fbFormatId = `${formatId}+bestaudio`;
       } else {

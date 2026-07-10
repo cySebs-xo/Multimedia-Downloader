@@ -8,7 +8,7 @@ export const analyzeSchema = z.object({
 export const downloadSchema = z.object({
   url: z.string().url('URL inválida'),
   type: z.enum(['video', 'audio']),
-  format: z.enum(['mp4', 'webm', 'mp3', 'wav']),
+  format: z.enum(['mp4', 'mp3', 'wav']),
   quality: z.string().min(1),
   formatId: z.string().min(1),
 });

@@ -32,7 +32,7 @@ export type AnalyzeRequest = {
 export type DownloadRequest = {
   url: string;
   type: 'video' | 'audio';
-  format: 'mp4' | 'webm' | 'mp3' | 'wav';
+  format: 'mp4' | 'mp3' | 'wav';
   quality: string;
   formatId: string;
 };

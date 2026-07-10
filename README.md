@@ -61,7 +61,7 @@ Se pega un enlace, se elige el formato y descarga el video o audio en el formato
 ## Características
 
 - **Análisis de contenido** — Detecta automáticamente si el enlace es un video o audio
-- **Múltiples formatos** — Descarga en `MP4`, `WEBM`, `MP3` o `WAV`
+- **Múltiples formatos** — Descarga en `MP4`, `MP3` o `WAV`
 - **Selección de calidad** — Elige la resolución o bitrate disponible (1080p, 720p, 480p...)
 - **Plataformas soportadas** — YouTube, TikTok, Instagram, X (Twitter), Facebook, SoundCloud y demás plataformas
 - **Modo oscuro / claro** — Se puede alternar entre los dos temas
