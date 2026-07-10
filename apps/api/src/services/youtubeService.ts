@@ -2,9 +2,13 @@ import { Innertube, ClientType } from 'youtubei.js';
 import ffmpeg from 'fluent-ffmpeg';
 import { Readable } from 'stream';
 import type { Response } from 'express';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 import { logger } from '../utils/logger';
 import type { MediaInfo, VideoFormat, AudioFormat } from '../types/media';
-import { getMediaInfo as ytDlpGetMediaInfo } from './ytDlpService';
+import { getMediaInfo as ytDlpGetMediaInfo, downloadMedia } from './ytDlpService';
+import { deleteFile } from '../utils/cleanup';
 
 function mimeToExt(mime: string): string {
   const match = mime.match(/^[^/]+\/([\w-]+)/);
@@ -132,13 +136,54 @@ class YouTubeService {
       throw Object.assign(new Error('No streaming_data available. Use yt-dlp fallback.'), { code: 'DOWNLOAD_FAILED' });
     }
 
-    // youtubei.js only outputs mp4 for progressive streams; webm must go through yt-dlp
-    if (format === 'webm') {
-      throw Object.assign(new Error('youtubei.js does not output webm; falling back to yt-dlp'), { code: 'DOWNLOAD_FAILED' });
-    }
-
     const rawTitle = info.basic_info.title || `youtube_${videoId}`;
     const cleanTitle = rawTitle.replace(/[/\\?%*:|"<>]/g, '_');
+
+    // youtubei.js only outputs mp4 for progressive streams; webm must go through yt-dlp
+    if (format === 'webm') {
+      const TEMP_DIR = process.env.TEMP_DIR || './temp';
+      const tempId = crypto.randomUUID();
+      const rawPath = path.join(TEMP_DIR, `${tempId}_raw`);
+
+      // Use webm-compatible format: prefer webm codecs, fall back to any
+      const webmFormatId = 'bestvideo[ext=webm]+bestaudio[ext=webm]/bestvideo+bestaudio/best';
+
+      await downloadMedia(url, webmFormatId, rawPath, 'youtube', 'webm');
+
+      let finalPath = rawPath;
+      if (!fs.existsSync(rawPath)) {
+        const dir = path.dirname(rawPath);
+        const base = path.basename(rawPath);
+        const files = fs.readdirSync(dir);
+        const match = files.find(f => f.startsWith(base + '.'));
+        if (match) finalPath = path.join(dir, match);
+      }
+
+      const stats = fs.statSync(finalPath);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(cleanTitle)}.webm"`);
+      res.setHeader('Content-Type', 'video/webm');
+      res.setHeader('Content-Length', stats.size);
+
+      const readStream = fs.createReadStream(finalPath);
+      readStream.pipe(res);
+
+      readStream.on('error', (err) => {
+        logger.error('webm stream error:', err);
+      });
+
+      res.on('close', async () => {
+        await deleteFile(finalPath);
+        const dir = path.dirname(finalPath);
+        const base = path.basename(rawPath);
+        for (const f of fs.readdirSync(dir)) {
+          if (f.startsWith(base + '.') || f.startsWith(base + '_')) {
+            await deleteFile(path.join(dir, f));
+          }
+        }
+      });
+
+      return;
+    }
 
     const streamOpts = { type: 'video+audio' as const, quality };
     const ext = 'mp4';
