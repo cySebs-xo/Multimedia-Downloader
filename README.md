@@ -1,8 +1,8 @@
 # LINKFETCH
 
-**Descarga videos y audios desde múltiples plataformas.**
+**Descarga videos y audios desde múltiples plataformas, de manera gratis y bastante simple**
 
-Se pega un enlace, se elige el formato y descarga el video o audio en el formato escogido. Sin registro.
+Se pega un enlace, se elige el formato y descarga el video o audio en el formato escogido.
 
 ---
 
@@ -29,7 +29,7 @@ Se pega un enlace, se elige el formato y descarga el video o audio en el formato
 
 ---
 
-## Tecnologías Utilizadas
+## Tecnologías Principalmente Utilizadas 
 
 ### Frontend
 ![Astro](https://img.shields.io/badge/Astro-FF5D01?style=flat&logo=astro&logoColor=white)
@@ -46,11 +46,6 @@ Se pega un enlace, se elige el formato y descarga el video o audio en el formato
 ### Procesamiento multimedia
 ![yt-dlp](https://img.shields.io/badge/yt--dlp-FF0000?style=flat&logo=youtube&logoColor=white)
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-007808?style=flat&logo=ffmpeg&logoColor=white)
-
-### Seguridad y validación
-![Zod](https://img.shields.io/badge/Zod-3E67B1?style=flat&logo=zod&logoColor=white)
-![Helmet](https://img.shields.io/badge/Helmet-000000?style=flat)
-![Rate Limit](https://img.shields.io/badge/Rate_Limit-FF6B6B?style=flat)
 
 ### Deploy
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white)
@@ -73,7 +68,7 @@ Se pega un enlace, se elige el formato y descarga el video o audio en el formato
 ## ¿Cómo funciona?
 
 ```
-1. Pega el enlace del video o audio en el campo de entrada
+1. Pega el enlace del video o audio en el campo de texto
 2. Haz clic en ANALIZAR
 3. Revisa la información del contenido detectado
 4. Elige si descargar video o solo el audio
@@ -95,7 +90,7 @@ Para Instagram se utiliza **yt-dlp + WARP proxy** como método principal para ob
 
 ### Otras plataformas (TikTok, Facebook, Twitch, X, Vimeo, etc.)
 
-Usan **yt-dlp** directamente tanto para análisis como para descarga, sin necesidad de proxies ni servicios adicionales.
+Usan **yt-dlp** directamente tanto para análisis como para descarga, sin necesidad de proxies ni servicios adicionales, ya que estas plataformas no presentan problemas con la descarga de su contenido.
 
 ---
 

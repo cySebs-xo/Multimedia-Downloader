@@ -17,7 +17,7 @@
   --text-btn:      #f5f5f5;
   --border:        #b8b8b8;
   --border-strong: #888888;
-  --symbol-color:  rgba(10, 10, 10, 0.13);
+  --symbol-color:  rgba(10, 10, 10, 0.14);
   --overlay-bg:    rgba(235, 235, 235, 0.85);
 }
 
@@ -99,6 +99,16 @@ button, input, textarea, select, [class*="card"], [class*="panel"] {
   word-break: break-word;
 }
 
+@media (hover: hover) {
+  .hero-title {
+    text-shadow:
+      calc((0.5 - var(--cx, 0.5)) * 28px)
+      calc((0.5 - var(--cy, 0.5)) * 28px)
+      6px var(--text-muted);
+    transition: text-shadow 0.15s ease;
+  }
+}
+
 .subtitle-tag {
   display: inline-block;
   max-width: 100%;
@@ -129,6 +139,8 @@ button, input, textarea, select, [class*="card"], [class*="panel"] {
   animation: fall linear infinite;
   z-index: 0;
   font-style: normal;
+  translate: var(--px, 0px) var(--py, 0px);
+  transition: color 0.15s ease;
 }
 
 @keyframes lf-blink {

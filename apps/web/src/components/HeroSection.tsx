@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import HeroDecoration from './HeroDecoration';
 import TypewriterWord from './TypewriterWord';
 import DownloadFlow from './DownloadFlow';
@@ -5,6 +6,32 @@ import { useLanguage } from '../hooks/useLanguage';
 
 export default function HeroSection() {
   const { t } = useLanguage();
+  const h1Ref = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const el = h1Ref.current;
+    if (!el) return;
+
+    const onMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const cx = (e.clientX - rect.left) / rect.width;
+      const cy = (e.clientY - rect.top) / rect.height;
+      el.style.setProperty('--cx', String(Math.max(0, Math.min(1, cx))));
+      el.style.setProperty('--cy', String(Math.max(0, Math.min(1, cy))));
+    };
+
+    const onLeave = () => {
+      el.style.removeProperty('--cx');
+      el.style.removeProperty('--cy');
+    };
+
+    el.addEventListener('mousemove', onMove);
+    el.addEventListener('mouseleave', onLeave);
+    return () => {
+      el.removeEventListener('mousemove', onMove);
+      el.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
 
   return (
     <section
@@ -30,7 +57,7 @@ export default function HeroSection() {
 
         <div className="hero-text-content" style={{ flex: '1 1 480px', maxWidth: '700px' }}>
 
-          <h1 className="hero-title" style={{ marginBottom: '1.5rem', overflowWrap: 'normal', wordBreak: 'keep-all' }}>
+          <h1 ref={h1Ref} className="hero-title" style={{ marginBottom: '1.5rem', overflowWrap: 'normal', wordBreak: 'keep-all' }}>
             {t.heroStaticTitle}<br />
             <TypewriterWord />
             <span

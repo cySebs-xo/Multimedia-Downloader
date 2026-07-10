@@ -16,35 +16,45 @@ export default function LanguageToggle() {
   if (!mounted) return null;
 
   return (
-    <button
-      onClick={toggle}
-      title={lang === 'es' ? 'Cambiar idioma a Inglés' : 'Switch to Spanish'}
-      aria-label={lang === 'es' ? 'Switch to English' : 'Cambiar a Español'}
-      style={{
-        width: '44px',
-        height: '44px',
-        border: '1.5px solid var(--border-strong)',
-        background: 'transparent',
-        color: 'var(--text-primary)',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        fontFamily: '"Space Mono", monospace',
-        fontSize: '0.7rem',
-        fontWeight: 700,
-        letterSpacing: '0.05em',
-        transition: 'background 0.2s, color 0.2s',
-      }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-card)';
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-      }}
-    >
-      {lang === 'es' ? 'ES' : 'EN'}
-    </button>
+    <>
+      <button
+        className="toggle-btn"
+        onClick={toggle}
+        title={lang === 'es' ? 'Cambiar idioma a Inglés' : 'Switch to Spanish'}
+        aria-label={lang === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+        style={{
+          width: '44px',
+          height: '44px',
+          border: '1.5px solid var(--border-strong)',
+          background: 'transparent',
+          color: 'var(--text-primary)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          fontFamily: '"Space Mono", monospace',
+          fontSize: '0.7rem',
+          fontWeight: 700,
+          letterSpacing: '0.05em',
+        }}
+      >
+        {lang === 'es' ? 'ES' : 'EN'}
+      </button>
+
+      <style>{`
+        .toggle-btn {
+          transition: transform 0.2s ease, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        @media (hover: hover) {
+          .toggle-btn:hover {
+            transform: scale(1.08);
+            background: var(--bg-card);
+            border-color: var(--text-muted);
+            box-shadow: 0 0 10px var(--overlay-bg);
+          }
+        }
+      `}</style>
+    </>
   );
 }
