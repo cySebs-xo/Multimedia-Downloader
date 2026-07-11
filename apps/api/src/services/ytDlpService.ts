@@ -187,10 +187,8 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
     const contentType: ContentType = data.formats.every((f: YtDlpFormat) => f.vcodec === 'none') ? 'audio' : 'video';
 
     const combinedFormats: YtDlpFormat[] = data.formats.filter((f: YtDlpFormat) =>
-      !['none', undefined, null].includes(f.vcodec) &&
-      f.vcodec !== '' &&
-      !['none', undefined, null].includes(f.acodec) &&
-      f.acodec !== '' &&
+      f.vcodec != null && f.vcodec !== 'none' && f.vcodec !== '' &&
+      f.acodec != null && f.acodec !== 'none' && f.acodec !== '' &&
       f.ext === 'mp4' &&
       (f.height != null && f.height > 0)
     );
@@ -198,8 +196,7 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
     const videoFormats: VideoFormat[] = (contentType === 'audio' ? [] : data.formats)
       .filter((f: YtDlpFormat) => {
         if (contentType === 'audio') return false;
-        return !['none', undefined, null].includes(f.vcodec) &&
-               f.vcodec !== '' &&
+        return (f.vcodec == null || (f.vcodec !== 'none' && f.vcodec !== '')) &&
                f.ext === 'mp4' &&
                (f.height != null && f.height > 0);
       })
@@ -261,14 +258,19 @@ export async function downloadMedia(url: string, formatId: string, outputPath: s
   const isMerged = formatId.includes('+');
   const mf = mergeFormat || 'mp4';
 
+  const twitchArgs: string[] = platform === 'twitch'
+    ? ['--downloader', 'ffmpeg']
+    : [];
+
   const args = isMerged
-    ? [...buildPlatformArgs(platform), '-f', formatId, '-o', `${outputPath}.%(ext)s`, '--merge-output-format', mf, url]
-    : [...buildPlatformArgs(platform), '-f', formatId, '-o', outputPath, url];
+    ? [...buildPlatformArgs(platform), ...twitchArgs, '-f', formatId, '-o', `${outputPath}.%(ext)s`, '--merge-output-format', mf, url]
+    : [...buildPlatformArgs(platform), ...twitchArgs, '-f', formatId, '-o', outputPath, url];
 
   logger.debug(`Spawning: ${ytDlpPath} ${args.join(' ')}`);
 
   try {
-    await spawnYtDlp(ytDlpPath, args, 300_000);
+    const timeout = platform === 'twitch' ? 1_800_000 : 300_000;
+    await spawnYtDlp(ytDlpPath, args, timeout);
     return outputPath;
   } catch (err) {
     const error = err as Error & { code?: string };
