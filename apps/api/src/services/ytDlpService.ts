@@ -237,6 +237,14 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
       ? videoFormats.filter(f => f.quality === '1080p')
       : videoFormats;
 
+    if (platform === 'twitch' && audioFormats.length === 0 && twitchVideoFormats.length > 0) {
+      audioFormats.push({
+        id: twitchVideoFormats[0].id,
+        quality: '192kbps',
+        ext: 'mp4',
+      });
+    }
+
     return {
       title: data.title,
       thumbnail: thumb,
