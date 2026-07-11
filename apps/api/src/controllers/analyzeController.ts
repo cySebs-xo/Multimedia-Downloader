@@ -49,7 +49,7 @@ export async function analyzeController(
     const platform = detectPlatform(url);
     logger.debug(`Analyzing URL: ${url} (platform: ${platform})`);
 
-    if (platform === 'twitch') {
+    if (platform === 'twitch' || platform === 'facebook') {
       const cached = getCached(url);
       if (cached) {
         res.json({ success: true, data: cached });
@@ -68,7 +68,7 @@ export async function analyzeController(
       info.platform = platform;
     }
 
-    if (platform === 'twitch') {
+    if (platform === 'twitch' || platform === 'facebook') {
       setCache(url, info);
     }
 
