@@ -233,6 +233,10 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
 
     const thumb = data.thumbnail ?? data.thumbnails?.[0]?.url ?? null;
 
+    const twitchVideoFormats = platform === 'twitch'
+      ? videoFormats.filter(f => f.quality === '1080p')
+      : videoFormats;
+
     return {
       title: data.title,
       thumbnail: thumb,
@@ -240,7 +244,7 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
       platform,
       contentType,
       formats: {
-        video: videoFormats,
+        video: twitchVideoFormats,
         audio: audioFormats,
       },
     };
