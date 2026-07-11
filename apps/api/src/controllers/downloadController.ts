@@ -107,11 +107,8 @@ export async function downloadController(
         await youtubeService.downloadAudio(url, format as 'mp3' | 'wav', res);
       }
     } else if (platform === 'instagram') {
-      if (type === 'audio') {
-        await instagramService.downloadAudio(url, format as 'mp3' | 'wav', res);
-      } else {
-        await instagramService.download(url, format as 'mp4', res);
-      }
+      const igFormatId = type === 'video' ? 'best' : 'bestaudio/best';
+      await handleDiskDownload(url, platform, igFormatId, format, type, res);
     } else {
       await handleDiskDownload(url, platform, formatId, format, type, res);
     }
