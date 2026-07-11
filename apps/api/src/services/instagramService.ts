@@ -18,38 +18,42 @@ interface OEmbedResponse {
 class InstagramService {
   async getMediaInfo(url: string): Promise<MediaInfo> {
     try {
-      const oembedRes = await fetch(
-        `${OEMBED_URL}?url=${encodeURIComponent(url)}`
-      );
-      if (oembedRes.ok) {
-        const data = (await oembedRes.json()) as OEmbedResponse;
-        const title = data.title?.replace(/[/\\?%*:|"<>]/g, '_')
-          || (data.author_name ? `Instagram video by ${data.author_name}` : 'instagram_video');
-        return {
-          title,
-          thumbnail: data.thumbnail_url || null,
-          duration: null,
-          platform: 'instagram',
-          contentType: 'video',
-          formats: {
-            video: [
-              { id: 'default', quality: '720p', ext: 'mp4', filesize: null },
-            ],
-            audio: [{ id: 'default', quality: '128kbps', ext: 'mp4' }],
-          },
-        };
-      }
-      logger.warn(`Instagram oEmbed returned ${oembedRes.status}, falling back to yt-dlp`);
-    } catch (oembedErr) {
-      logger.warn(`Instagram oEmbed failed, falling back to yt-dlp: ${(oembedErr as Error).message}`);
+      const ytInfo = await ytDlpGetMediaInfo(url, 'instagram');
+      const thumb = ytInfo.thumbnail || null;
+      return {
+        title: ytInfo.title,
+        thumbnail: thumb,
+        duration: ytInfo.duration ?? null,
+        platform: 'instagram',
+        contentType: 'video',
+        formats: {
+          video: [
+            { id: 'default', quality: '720p', ext: 'mp4', filesize: null },
+          ],
+          audio: [{ id: 'default', quality: '128kbps', ext: 'mp4' }],
+        },
+      };
+    } catch (ytErr) {
+      logger.warn(`yt-dlp failed for Instagram analyze, falling back to oEmbed: ${(ytErr as Error).message}`);
     }
 
-    const ytInfo = await ytDlpGetMediaInfo(url, 'instagram');
-    const thumb = ytInfo.thumbnail || null;
+    const oembedRes = await fetch(
+      `${OEMBED_URL}?url=${encodeURIComponent(url)}`
+    );
+    if (!oembedRes.ok) {
+      throw Object.assign(new Error('No se pudo obtener información de este contenido de Instagram.'), { code: 'DOWNLOAD_FAILED' });
+    }
+
+    const data = (await oembedRes.json()) as OEmbedResponse;
+
+    const title = data.title?.replace(/[/\\?%*:|"<>]/g, '_')
+      || (data.author_name ? `Instagram video by ${data.author_name}` : 'instagram_video');
+    const thumbnail = data.thumbnail_url || null;
+
     return {
-      title: ytInfo.title,
-      thumbnail: thumb,
-      duration: ytInfo.duration ?? null,
+      title,
+      thumbnail,
+      duration: null,
       platform: 'instagram',
       contentType: 'video',
       formats: {
