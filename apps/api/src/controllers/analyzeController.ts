@@ -72,7 +72,9 @@ export async function analyzeController(
       info.thumbnail = `${proto}://${host}/thumbnail?url=${encodeURIComponent(info.thumbnail)}`;
     }
 
-    setCache(url, info);
+    if (info.platform !== 'instagram') {
+      setCache(url, info);
+    }
 
     res.json({
       success: true,
