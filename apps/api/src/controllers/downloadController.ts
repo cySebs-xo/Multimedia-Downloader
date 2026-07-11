@@ -118,7 +118,7 @@ export async function downloadController(
   } catch (err) {
     if ((platform === 'youtube' || platform === 'instagram') && !res.headersSent) {
       logger.warn(`Fallback to yt-dlp for ${platform}: ${(err as Error).message}`);
-      const isDefault = formatId === 'default';
+      const isDefault = formatId === 'default' || formatId.startsWith('default+');
       let fbFormatId: string;
       if (isDefault) {
         fbFormatId = platform === 'youtube'
