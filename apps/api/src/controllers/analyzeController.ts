@@ -4,28 +4,6 @@ import { youtubeService } from '../services/youtubeService';
 import { instagramService } from '../services/instagramService';
 import { isSupportedPlatform, detectPlatform } from '../services/platformService';
 import { logger } from '../utils/logger';
-import type { MediaInfo } from '../types/media';
-
-const CACHE_TTL = 5 * 60 * 1000;
-const cache = new Map<string, { data: MediaInfo; ts: number }>();
-
-function getCached(url: string): MediaInfo | null {
-  const entry = cache.get(url);
-  if (!entry) return null;
-  if (Date.now() - entry.ts > CACHE_TTL) {
-    cache.delete(url);
-    return null;
-  }
-  return entry.data;
-}
-
-function setCache(url: string, data: MediaInfo): void {
-  if (cache.size > 500) {
-    const oldest = cache.entries().next().value;
-    if (oldest) cache.delete(oldest[0]);
-  }
-  cache.set(url, { data, ts: Date.now() });
-}
 
 export async function analyzeController(
   req: Request,
@@ -43,12 +21,6 @@ export async function analyzeController(
           message: `La plataforma no es compatible. URL: ${url}`,
         },
       });
-      return;
-    }
-
-    const cached = getCached(url);
-    if (cached) {
-      res.json({ success: true, data: cached });
       return;
     }
 
@@ -70,10 +42,6 @@ export async function analyzeController(
       const proto = req.headers['x-forwarded-proto'] || req.protocol;
       const host = req.headers['x-forwarded-host'] || req.get('host');
       info.thumbnail = `${proto}://${host}/thumbnail?url=${encodeURIComponent(info.thumbnail)}`;
-    }
-
-    if (info.platform !== 'instagram') {
-      setCache(url, info);
     }
 
     res.json({
