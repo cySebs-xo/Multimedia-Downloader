@@ -74,7 +74,8 @@ class YouTubeService {
           seenQualities.add(key);
           return true;
         })
-        .sort((a, b) => parseInt(b.quality) - parseInt(a.quality));
+        .sort((a, b) => parseInt(b.quality) - parseInt(a.quality))
+        .slice(0, 6);
 
       if (videoFormats.length === 0) {
         videoFormats.push({ id: 'default', quality: '720p', ext: 'mp4', filesize: null });
@@ -88,6 +89,8 @@ class YouTubeService {
               quality: `${Math.round(f.bitrate / 1000)}kbps`,
               ext: mimeToExt(f.mime_type),
             }))
+            .sort((a, b) => parseInt(b.quality) - parseInt(a.quality))
+            .slice(0, 3)
         : [{ id: 'default', quality: '128kbps', ext: 'm4a' }];
 
       const contentType = videoFormats.length > 0 ? 'video' : 'audio';
