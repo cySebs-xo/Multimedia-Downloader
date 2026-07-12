@@ -100,7 +100,7 @@ export default function DownloadModal({ entry, onStartDownload, onCancelDownload
     if (!selectedFormat || !selectedFormatId || !selectedQuality) return;
 
     const formatId = target.type === 'video'
-      ? `${selectedFormatId}+bestaudio[ext=m4a]/bestvideo[ext=${selectedFormat}]+bestaudio/best[ext=${selectedFormat}]/best`
+      ? `${selectedFormatId}+bestaudio/bestvideo[ext=${selectedFormat}]+bestaudio/best[ext=${selectedFormat}]/best`
       : selectedFormatId;
 
     onStartDownload(entry.id, {

@@ -53,6 +53,7 @@ type YtDlpFormat = {
   vcodec: string;
   acodec: string;
   tbr: number | null;
+  abr: number | null;
 };
 
 type YtDlpThumbnail = {
@@ -215,7 +216,8 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
     const pureAudioFormats = data.formats
       .filter((f: YtDlpFormat) => {
         const isAudioOnly = f.vcodec === 'none' || f.vcodec === '' || f.vcodec == null;
-        const hasAudio = f.acodec !== 'none' && f.acodec !== '' && f.acodec != null;
+        const hasAudio = (f.acodec !== 'none' && f.acodec !== '' && f.acodec != null)
+                      || (f.abr != null && f.abr > 0);
         return isAudioOnly && hasAudio;
       });
 
@@ -233,13 +235,19 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
 
     const thumb = data.thumbnail ?? data.thumbnails?.[0]?.url ?? null;
 
-    const twitchVideoFormats = platform === 'twitch'
-      ? videoFormats.filter(f => f.quality === '1080p')
-      : videoFormats;
+    let platformVideoFormats = videoFormats;
 
-    if (platform === 'twitch' && audioFormats.length === 0 && twitchVideoFormats.length > 0) {
+    if (platform === 'twitch') {
+      platformVideoFormats = platformVideoFormats.filter(f => f.quality === '1080p');
+    }
+
+    if (platform === 'twitter') {
+      platformVideoFormats = platformVideoFormats.filter(f => !f.id.startsWith('http'));
+    }
+
+    if (platform === 'twitch' && audioFormats.length === 0 && platformVideoFormats.length > 0) {
       audioFormats.push({
-        id: twitchVideoFormats[0].id,
+        id: platformVideoFormats[0].id,
         quality: '192kbps',
         ext: 'mp4',
       });
@@ -252,7 +260,7 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
       platform,
       contentType,
       formats: {
-        video: twitchVideoFormats,
+        video: platformVideoFormats,
         audio: audioFormats,
       },
     };
