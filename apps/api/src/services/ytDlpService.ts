@@ -206,7 +206,7 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
         id: f.format_id,
         quality: f.height ? `${f.height}p` : `${f.tbr ? Math.round(f.tbr) : 0}k`,
         ext: 'mp4',
-        filesize: f.filesize ?? f.filesize_approx ?? null,
+        filesize: f.filesize ?? f.filesize_approx ?? (f.tbr && data.duration ? Math.round(f.tbr * 1000 / 8 * data.duration) : null),
       }))
       .sort((a: VideoFormat, b: VideoFormat) => {
         const aNum = parseInt(a.quality);
