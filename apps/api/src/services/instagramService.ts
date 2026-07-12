@@ -1,4 +1,6 @@
 import type { Response } from 'express';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { logger } from '../utils/logger';
 import type { MediaInfo } from '../types/media';
 import { getMediaInfo as ytDlpGetMediaInfo } from './ytDlpService';
@@ -34,7 +36,37 @@ class InstagramService {
         },
       };
     } catch (ytErr) {
-      logger.warn(`yt-dlp failed for Instagram analyze, falling back to oEmbed: ${(ytErr as Error).message}`);
+      logger.warn(`yt-dlp failed for Instagram, retrying with cookies: ${(ytErr as Error).message}`);
+      try {
+        const exec = promisify(execFile);
+        const { stdout } = await exec('yt-dlp', [
+          '--no-playlist', '--force-ipv4',
+          '--cookies-from-browser', 'firefox',
+          '--dump-json', url,
+        ], { timeout: 30000, maxBuffer: 10 * 1024 * 1024 });
+        const lines = stdout.trim().split('\n');
+        const data = JSON.parse(lines[lines.length - 1]);
+        const thumb = data.thumbnail ?? data.thumbnails?.[0]?.url ?? null;
+        const videoFmt = data.formats?.find((f: any) => f.height > 0 && f.ext === 'mp4');
+        const audioFmt = data.formats?.find((f: any) => f.vcodec === 'none' && f.acodec !== 'none' && f.acodec != null);
+        return {
+          title: data.title ?? 'instagram_video',
+          thumbnail: thumb,
+          duration: data.duration ?? null,
+          platform: 'instagram',
+          contentType: 'video',
+          formats: {
+            video: [
+              { id: 'default', quality: '720p', ext: 'mp4', filesize: videoFmt ? (videoFmt.filesize ?? videoFmt.filesize_approx ?? null) : null },
+            ],
+            audio: [
+              { id: 'default', quality: '128kbps', ext: 'mp4', filesize: audioFmt ? (audioFmt.filesize ?? audioFmt.filesize_approx ?? null) : null },
+            ],
+          },
+        };
+      } catch (cookieErr) {
+        logger.warn(`yt-dlp with cookies also failed, falling to oEmbed: ${(cookieErr as Error).message}`);
+      }
     }
 
     const oembedRes = await fetch(
