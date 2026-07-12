@@ -28,9 +28,9 @@ class InstagramService {
         contentType: 'video',
         formats: {
           video: [
-            { id: 'default', quality: '720p', ext: 'mp4', filesize: null },
+            { id: 'default', quality: '720p', ext: 'mp4', filesize: ytInfo.formats.video[0]?.filesize ?? null },
           ],
-          audio: [{ id: 'default', quality: '128kbps', ext: 'mp4', filesize: null }],
+          audio: [{ id: 'default', quality: '128kbps', ext: 'mp4', filesize: ytInfo.formats.audio[0]?.filesize ?? null }],
         },
       };
     } catch (ytErr) {
