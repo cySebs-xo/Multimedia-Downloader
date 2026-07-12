@@ -46,11 +46,22 @@ export default function DownloadModal({ entry, onStartDownload, onCancelDownload
   const qualityOptions = useMemo(() => {
     const seen = new Set<string>();
     if (target.type === 'audio') {
-      return (target.formats as AudioFormat[]).filter(f => {
-        if (seen.has(f.quality)) return false;
-        seen.add(f.quality);
-        return true;
-      });
+      return (target.formats as AudioFormat[])
+        .filter(f => {
+          if (seen.has(f.quality)) return false;
+          seen.add(f.quality);
+          return true;
+        })
+        .map(f => {
+          if (target.duration && target.duration > 0) {
+            const bitrate = selectedFormat === 'wav' ? 1411.2 : 320;
+            return {
+              ...f,
+              filesize: Math.round(bitrate * 1000 / 8 * target.duration),
+            };
+          }
+          return f;
+        });
     }
     return (target.formats as VideoFormat[]).filter(f => {
       if (f.ext !== selectedFormat) return false;
@@ -58,7 +69,7 @@ export default function DownloadModal({ entry, onStartDownload, onCancelDownload
       seen.add(f.quality);
       return true;
     });
-  }, [target.formats, selectedFormat, target.type]);
+  }, [target.formats, selectedFormat, target.type, target.duration]);
 
   useEffect(() => {
     const firstExt = formatOptions[0];
