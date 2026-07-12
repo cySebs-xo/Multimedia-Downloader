@@ -54,19 +54,14 @@ export default function DownloadModal({ entry, onStartDownload, onCancelDownload
         })
         .map(f => {
           if (target.duration && target.duration > 0) {
-            let bitrate: number;
-            if (selectedFormat === 'wav') {
-              bitrate = 1411.2;
-            } else if (target.platform === 'youtube') {
-              const n = parseInt(f.quality);
-              bitrate = !isNaN(n) && n > 0 ? n : 320;
-            } else {
-              bitrate = 320;
+            const n = parseInt(f.quality);
+            if (!isNaN(n) && n > 0) {
+              const bitrate = selectedFormat === 'wav' ? Math.round(n * 1411.2 / 320) : n;
+              return {
+                ...f,
+                filesize: Math.round(bitrate * 1000 / 8 * target.duration),
+              };
             }
-            return {
-              ...f,
-              filesize: Math.round(bitrate * 1000 / 8 * target.duration),
-            };
           }
           return f;
         });
