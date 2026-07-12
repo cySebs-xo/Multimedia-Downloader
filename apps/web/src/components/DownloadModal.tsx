@@ -54,7 +54,15 @@ export default function DownloadModal({ entry, onStartDownload, onCancelDownload
         })
         .map(f => {
           if (target.duration && target.duration > 0) {
-            const bitrate = selectedFormat === 'wav' ? 1411.2 : 320;
+            let bitrate: number;
+            if (selectedFormat === 'wav') {
+              bitrate = 1411.2;
+            } else if (target.platform === 'youtube') {
+              const n = parseInt(f.quality);
+              bitrate = !isNaN(n) && n > 0 ? n : 320;
+            } else {
+              bitrate = 320;
+            }
             return {
               ...f,
               filesize: Math.round(bitrate * 1000 / 8 * target.duration),
@@ -69,7 +77,7 @@ export default function DownloadModal({ entry, onStartDownload, onCancelDownload
       seen.add(f.quality);
       return true;
     });
-  }, [target.formats, selectedFormat, target.type, target.duration]);
+  }, [target.formats, selectedFormat, target.type, target.duration, target.platform]);
 
   useEffect(() => {
     const firstExt = formatOptions[0];
