@@ -50,6 +50,7 @@ type YtDlpFormat = {
   width: number | null;
   height: number | null;
   filesize: number | null;
+  filesize_approx: number | null;
   vcodec: string;
   acodec: string;
   tbr: number | null;
@@ -205,7 +206,7 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
         id: f.format_id,
         quality: f.height ? `${f.height}p` : `${f.tbr ? Math.round(f.tbr) : 0}k`,
         ext: 'mp4',
-        filesize: f.filesize,
+        filesize: f.filesize ?? f.filesize_approx ?? null,
       }))
       .sort((a: VideoFormat, b: VideoFormat) => {
         const aNum = parseInt(a.quality);
