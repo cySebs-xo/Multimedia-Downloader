@@ -30,7 +30,7 @@ class InstagramService {
           video: [
             { id: 'default', quality: '720p', ext: 'mp4', filesize: null },
           ],
-          audio: [{ id: 'default', quality: '128kbps', ext: 'mp4' }],
+          audio: [{ id: 'default', quality: '128kbps', ext: 'mp4', filesize: null }],
         },
       };
     } catch (ytErr) {
@@ -60,7 +60,7 @@ class InstagramService {
         video: [
           { id: 'default', quality: '720p', ext: 'mp4', filesize: null },
         ],
-        audio: [{ id: 'default', quality: '128kbps', ext: 'mp4' }],
+        audio: [{ id: 'default', quality: '128kbps', ext: 'mp4', filesize: null }],
       },
     };
   }

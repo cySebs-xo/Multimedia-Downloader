@@ -11,6 +11,7 @@ export type AudioFormat = {
   id: string;
   quality: string;
   ext: string;
+  filesize: number | null;
 };
 
 export type MediaInfo = {

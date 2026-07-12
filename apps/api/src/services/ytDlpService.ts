@@ -223,11 +223,15 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
       });
 
     const audioFormats: AudioFormat[] = (pureAudioFormats.length > 0 ? pureAudioFormats : combinedFormats)
-      .map((f: YtDlpFormat): AudioFormat => ({
-        id: f.format_id,
-        quality: f.tbr ? `${Math.round(f.tbr)}kbps` : 'unknown',
-        ext: f.ext as 'm4a' | 'mp3' | 'wav',
-      }))
+      .map((f: YtDlpFormat): AudioFormat => {
+        const bitrate = f.tbr ?? f.abr;
+        return {
+          id: f.format_id,
+          quality: f.tbr ? `${Math.round(f.tbr)}kbps` : 'unknown',
+          ext: f.ext as 'm4a' | 'mp3' | 'wav',
+          filesize: f.filesize ?? f.filesize_approx ?? (bitrate && data.duration ? Math.round(bitrate * 1000 / 8 * data.duration) : null),
+        };
+      })
       .sort((a: AudioFormat, b: AudioFormat) => {
         const aNum = parseInt(a.quality);
         const bNum = parseInt(b.quality);
@@ -251,6 +255,7 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
         id: platformVideoFormats[0].id,
         quality: '192kbps',
         ext: 'mp4',
+        filesize: null,
       });
     }
 

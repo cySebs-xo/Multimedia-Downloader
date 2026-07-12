@@ -88,10 +88,11 @@ class YouTubeService {
               id: String(f.itag),
               quality: `${Math.round(f.bitrate / 1000)}kbps`,
               ext: mimeToExt(f.mime_type),
+              filesize: null,
             }))
             .sort((a, b) => parseInt(b.quality) - parseInt(a.quality))
             .slice(0, 3)
-        : [{ id: 'default', quality: '128kbps', ext: 'm4a' }];
+        : [{ id: 'default', quality: '128kbps', ext: 'm4a', filesize: null }];
 
       const contentType = videoFormats.length > 0 ? 'video' : 'audio';
 
