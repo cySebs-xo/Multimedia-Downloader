@@ -49,7 +49,7 @@ export async function analyzeController(
     const platform = detectPlatform(url);
     logger.debug(`Analyzing URL: ${url} (platform: ${platform})`);
 
-    if (platform === 'twitch' || platform === 'facebook' || platform === 'twitter' || platform === 'soundcloud') {
+    if (platform === 'twitch' || platform === 'facebook' || platform === 'twitter' || platform === 'soundcloud' || platform === 'youtube' || platform === 'instagram' || platform === 'tiktok' || platform === 'vimeo' || platform === 'dailymotion') {
       const cached = getCached(url);
       if (cached) {
         res.json({ success: true, data: cached });
@@ -68,7 +68,7 @@ export async function analyzeController(
       info.platform = platform;
     }
 
-    if (platform === 'twitch' || platform === 'facebook' || platform === 'twitter' || platform === 'soundcloud') {
+    if (platform === 'twitch' || platform === 'facebook' || platform === 'twitter' || platform === 'soundcloud' || platform === 'youtube' || platform === 'instagram' || platform === 'tiktok' || platform === 'vimeo' || platform === 'dailymotion') {
       setCache(url, info);
     }
 
