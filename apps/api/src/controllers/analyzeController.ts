@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { getMediaInfo as ytDlpGetMediaInfo } from '../services/ytDlpService';
 import { youtubeService } from '../services/youtubeService';
 import { instagramService } from '../services/instagramService';
+import { dailymotionService } from '../services/dailymotionService';
 import { isSupportedPlatform, detectPlatform } from '../services/platformService';
 import { logger } from '../utils/logger';
 import type { MediaInfo } from '../types/media';
@@ -63,6 +64,8 @@ export async function analyzeController(
       info = await youtubeService.getMediaInfo(url);
     } else if (platform === 'instagram') {
       info = await instagramService.getMediaInfo(url);
+    } else if (platform === 'dailymotion') {
+      info = await dailymotionService.getMediaInfo(url);
     } else {
       info = await ytDlpGetMediaInfo(url, platform);
       info.platform = platform;
