@@ -112,6 +112,12 @@ export async function downloadController(
       } else {
         await instagramService.download(url, format as 'mp4', res);
       }
+    } else if (platform === 'pinterest') {
+      if (type === 'audio') {
+        await handleDiskDownload(url, platform, 'bestaudio/best', format, type, res);
+      } else {
+        await handleDiskDownload(url, platform, formatId, format, type, res);
+      }
     } else {
       await handleDiskDownload(url, platform, formatId, format, type, res);
     }
