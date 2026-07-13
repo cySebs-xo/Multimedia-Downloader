@@ -8,6 +8,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import { logger } from '../utils/logger';
 import type { MediaInfo, VideoFormat, AudioFormat } from '../types/media';
 import { deleteFile } from '../utils/cleanup';
+import { getMediaInfo as ytDlpGetMediaInfo, downloadMedia } from './ytDlpService';
 
 const TEMP_DIR = process.env.TEMP_DIR || './temp';
 const METADATA_API = 'https://www.dailymotion.com/player/metadata/video';
@@ -117,6 +118,12 @@ class DailymotionService {
   }
 
   async getMediaInfo(url: string): Promise<MediaInfo> {
+    try {
+      return await ytDlpGetMediaInfo(url, 'dailymotion');
+    } catch (err) {
+      logger.warn(`[dailymotion] yt-dlp failed for analysis, falling back to custom parser: ${(err as Error).message}`);
+    }
+
     const videoId = this.extractVideoId(url);
     const cdHeaders = this.createBlockbusterHeaders();
     const meta = await this.fetchJson(`${METADATA_API}/${videoId}`, this.baseHeaders);
@@ -179,6 +186,15 @@ class DailymotionService {
   }
 
   async download(url: string, formatId: string, res: Response): Promise<void> {
+    if (!formatId.startsWith('hls-')) {
+      try {
+        await this.downloadWithYtDlp(url, formatId, res);
+        return;
+      } catch (err) {
+        logger.warn(`[dailymotion] yt-dlp download failed, falling back to HLS: ${(err as Error).message}`);
+      }
+    }
+
     const videoId = this.extractVideoId(url);
     const cdHeaders = this.createBlockbusterHeaders();
     const tempId = uuidv4();
@@ -211,6 +227,13 @@ class DailymotionService {
   }
 
   async downloadAudio(url: string, format: 'mp3' | 'wav', res: Response): Promise<void> {
+    try {
+      await this.downloadAudioWithYtDlp(url, format, res);
+      return;
+    } catch (err) {
+      logger.warn(`[dailymotion] yt-dlp audio download failed, falling back to HLS: ${(err as Error).message}`);
+    }
+
     const videoId = this.extractVideoId(url);
     const cdHeaders = this.createBlockbusterHeaders();
     const tempId = uuidv4();
@@ -262,6 +285,100 @@ class DailymotionService {
       });
     } catch (err) {
       await deleteFile(mp4Path).catch(() => {});
+      throw err;
+    }
+  }
+
+  private async downloadWithYtDlp(url: string, formatId: string, res: Response): Promise<void> {
+    const tempId = uuidv4();
+    const outputPath = path.join(TEMP_DIR, `${tempId}.mp4`);
+
+    try {
+      await downloadMedia(url, formatId, outputPath, 'dailymotion');
+
+      const stats = fs.statSync(outputPath);
+
+      let cleanTitle = 'dailymotion_video';
+      try {
+        const meta = await ytDlpGetMediaInfo(url, 'dailymotion');
+        cleanTitle = meta.title.replace(/[/\\?%*:|"<>]/g, '_');
+      } catch {}
+
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(cleanTitle)}.mp4"`);
+      res.setHeader('Content-Type', 'video/mp4');
+      res.setHeader('Content-Length', stats.size);
+
+      const readStream = fs.createReadStream(outputPath);
+      readStream.pipe(res);
+
+      readStream.on('error', (err) => logger.error(`Dailymotion stream error: ${err.message}`));
+
+      res.on('close', () => {
+        deleteFile(outputPath).catch(() => {});
+      });
+    } catch (err) {
+      await deleteFile(outputPath).catch(() => {});
+      throw err;
+    }
+  }
+
+  private async downloadAudioWithYtDlp(url: string, format: 'mp3' | 'wav', res: Response): Promise<void> {
+    const tempId = uuidv4();
+    const rawPath = path.join(TEMP_DIR, `${tempId}_raw`);
+    const outputPath = path.join(TEMP_DIR, `${tempId}.${format}`);
+
+    try {
+      await downloadMedia(url, 'bestaudio/best', rawPath, 'dailymotion');
+
+      let cleanTitle = 'dailymotion_video';
+      try {
+        const meta = await ytDlpGetMediaInfo(url, 'dailymotion');
+        cleanTitle = meta.title.replace(/[/\\?%*:|"<>]/g, '_');
+      } catch {}
+
+      const resolvePath = (): string => {
+        if (fs.existsSync(rawPath)) return rawPath;
+        const dir = path.dirname(rawPath);
+        const base = path.basename(rawPath);
+        const files = fs.readdirSync(dir);
+        const match = files.find(f => f.startsWith(base + '.'));
+        return match ? path.join(dir, match) : rawPath;
+      };
+
+      const actualRawPath = resolvePath();
+
+      const audioCodec = format === 'mp3' ? 'libmp3lame' : 'pcm_s16le';
+      const contentType = format === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(cleanTitle)}.${format}"`);
+      res.setHeader('Content-Type', contentType);
+
+      const command = ffmpeg(actualRawPath)
+        .audioCodec(audioCodec)
+        .format(format);
+
+      if (format === 'mp3') command.audioBitrate(320);
+      if (format === 'wav') command.audioFrequency(44100);
+
+      command.on('error', (err) => {
+        logger.error(`Dailymotion audio FFmpeg error: ${err.message}`);
+        if (!res.headersSent) {
+          res.status(502).json({
+            success: false,
+            error: { code: 'CONVERSION_FAILED', message: 'Error al convertir el audio.' },
+          });
+        }
+      });
+
+      command.pipe(res, { end: true });
+
+      res.on('close', () => {
+        deleteFile(actualRawPath).catch(() => {});
+        deleteFile(outputPath).catch(() => {});
+      });
+    } catch (err) {
+      await deleteFile(rawPath).catch(() => {});
+      await deleteFile(outputPath).catch(() => {});
       throw err;
     }
   }
