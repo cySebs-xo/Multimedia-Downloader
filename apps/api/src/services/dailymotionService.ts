@@ -21,7 +21,7 @@ type Variant = {
 };
 
 class DailymotionService {
-  private baseHeaders: Record<string, string> = {
+  private readonly baseHeaders: Record<string, string> = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0',
     'Accept': '*/*',
     'Accept-Language': 'en-US,en;q=0.9',
@@ -29,7 +29,7 @@ class DailymotionService {
     'Referer': 'https://www.dailymotion.com/',
   };
 
-  private blockbusterHeaders(): Record<string, string> {
+  private createBlockbusterHeaders(): Record<string, string> {
     const chars = 'bcdfghjklmnpqrstvwxz';
     const randomLetters = (min: number, max: number): string => {
       const len = min + Math.floor(Math.random() * (max - min + 1));
@@ -52,13 +52,13 @@ class DailymotionService {
     return match[1];
   }
 
-  private async fetchJson(url: string, useBlockbuster = false): Promise<any> {
-    const resp = await fetch(url, { headers: useBlockbuster ? this.blockbusterHeaders() : this.baseHeaders });
+  private async fetchJson(url: string, headers: Record<string, string>): Promise<any> {
+    const resp = await fetch(url, { headers });
     if (!resp.ok) throw new Error(`Dailymotion API error: HTTP ${resp.status}`);
     return resp.json();
   }
 
-  private httpsGet(url: string, useBlockbuster: boolean): Promise<{ status: number; body: string; buffer: Buffer }> {
+  private httpsGet(url: string, headers: Record<string, string>): Promise<{ status: number; body: string; buffer: Buffer }> {
     return new Promise((resolve, reject) => {
       const u = new URL(url);
       const mod = u.protocol === 'https:' ? https : http;
@@ -66,7 +66,7 @@ class DailymotionService {
         hostname: u.hostname,
         path: u.pathname + u.search,
         method: 'GET',
-        headers: useBlockbuster ? this.blockbusterHeaders() : this.baseHeaders,
+        headers,
       };
       const req = mod.request(opts, (res) => {
         const chunks: Buffer[] = [];
@@ -81,15 +81,15 @@ class DailymotionService {
     });
   }
 
-  private async fetchText(url: string, useBlockbuster = false): Promise<string> {
-    const { status, body } = await this.httpsGet(url, useBlockbuster);
-    if (status !== 200) throw new Error(`Dailymotion request error: HTTP ${status}`);
+  private async fetchText(url: string, headers: Record<string, string>): Promise<string> {
+    const { status, body } = await this.httpsGet(url, headers);
+    if (status !== 200) throw new Error(`Dailymotion request error (${url}): HTTP ${status}`);
     return body;
   }
 
-  private async fetchBuffer(url: string, useBlockbuster = false): Promise<Buffer> {
-    const { status, buffer } = await this.httpsGet(url, useBlockbuster);
-    if (status !== 200) throw new Error(`Dailymotion request error: HTTP ${status}`);
+  private async fetchBuffer(url: string, headers: Record<string, string>): Promise<Buffer> {
+    const { status, buffer } = await this.httpsGet(url, headers);
+    if (status !== 200) throw new Error(`Dailymotion request error (${url}): HTTP ${status}`);
     return buffer;
   }
 
@@ -118,7 +118,8 @@ class DailymotionService {
 
   async getMediaInfo(url: string): Promise<MediaInfo> {
     const videoId = this.extractVideoId(url);
-    const meta = await this.fetchJson(`${METADATA_API}/${videoId}`);
+    const cdHeaders = this.createBlockbusterHeaders();
+    const meta = await this.fetchJson(`${METADATA_API}/${videoId}`, this.baseHeaders);
 
     if (meta.error) {
       const msg = meta.error.title || meta.error.raw_message || 'Unknown error';
@@ -142,7 +143,7 @@ class DailymotionService {
       throw Object.assign(new Error('No se encontraron formatos para este video de Dailymotion.'), { code: 'DOWNLOAD_FAILED' });
     }
 
-    const masterM3u8 = await this.fetchText(m3u8Url, true);
+    const masterM3u8 = await this.fetchText(m3u8Url, cdHeaders);
     const variants = this.parseMasterM3u8(masterM3u8);
 
     if (variants.length === 0) {
@@ -179,14 +180,16 @@ class DailymotionService {
 
   async download(url: string, formatId: string, res: Response): Promise<void> {
     const videoId = this.extractVideoId(url);
+    const cdHeaders = this.createBlockbusterHeaders();
     const tempId = uuidv4();
     const outputPath = path.join(TEMP_DIR, `${tempId}.mp4`);
 
     try {
-      await this.downloadHlsToFile(videoId, formatId, outputPath);
+      await this.downloadHlsToFile(videoId, formatId, outputPath, cdHeaders);
 
       const stats = fs.statSync(outputPath);
-      const rawTitle = await this.getTitle(videoId);
+      const meta = await this.fetchJson(`${METADATA_API}/${videoId}`, this.baseHeaders);
+      const rawTitle = meta.title || `dailymotion_${videoId}`;
       const cleanTitle = rawTitle.replace(/[/\\?%*:|"<>]/g, '_');
 
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(cleanTitle)}.mp4"`);
@@ -209,20 +212,21 @@ class DailymotionService {
 
   async downloadAudio(url: string, format: 'mp3' | 'wav', res: Response): Promise<void> {
     const videoId = this.extractVideoId(url);
+    const cdHeaders = this.createBlockbusterHeaders();
     const tempId = uuidv4();
     const mp4Path = path.join(TEMP_DIR, `${tempId}.mp4`);
 
     try {
-      const meta = await this.fetchJson(`${METADATA_API}/${videoId}`);
+      const meta = await this.fetchJson(`${METADATA_API}/${videoId}`, this.baseHeaders);
       const m3u8Url = meta.qualities?.auto?.[0]?.url;
       if (!m3u8Url) throw new Error('No m3u8 URL found in metadata');
 
-      const masterM3u8 = await this.fetchText(m3u8Url, true);
+      const masterM3u8 = await this.fetchText(m3u8Url, cdHeaders);
       const variants = this.parseMasterM3u8(masterM3u8);
       const best = [...variants].sort((a, b) => b.bandwidth - a.bandwidth)[0];
       const bestId = `hls-${best.height}`;
 
-      await this.downloadHlsToFile(videoId, bestId, mp4Path);
+      await this.downloadHlsToFile(videoId, bestId, mp4Path, cdHeaders);
 
       const rawTitle = meta.title || `dailymotion_${videoId}`;
       const cleanTitle = rawTitle.replace(/[/\\?%*:|"<>]/g, '_');
@@ -262,19 +266,24 @@ class DailymotionService {
     }
   }
 
-  private async downloadHlsToFile(videoId: string, formatId: string, outputPath: string): Promise<void> {
-    const meta = await this.fetchJson(`${METADATA_API}/${videoId}`);
+  private async downloadHlsToFile(
+    videoId: string,
+    formatId: string,
+    outputPath: string,
+    cdHeaders: Record<string, string>,
+  ): Promise<void> {
+    const meta = await this.fetchJson(`${METADATA_API}/${videoId}`, this.baseHeaders);
     const m3u8Url = meta.qualities?.auto?.[0]?.url;
     if (!m3u8Url) throw new Error('No m3u8 URL found in metadata');
 
-    const masterM3u8 = await this.fetchText(m3u8Url, true);
+    const masterM3u8 = await this.fetchText(m3u8Url, cdHeaders);
     const variants = this.parseMasterM3u8(masterM3u8);
 
     const targetHeight = parseInt(formatId.replace('hls-', ''));
     const variant = variants.find(v => v.height === targetHeight)
       || [...variants].sort((a, b) => b.bandwidth - a.bandwidth)[0];
 
-    const variantM3u8 = await this.fetchText(variant.url, true);
+    const variantM3u8 = await this.fetchText(variant.url, cdHeaders);
     const lines = variantM3u8.split('\n').map(l => l.trim()).filter(Boolean);
 
     const baseUrl = variant.url.substring(0, variant.url.lastIndexOf('/') + 1);
@@ -285,14 +294,14 @@ class DailymotionService {
 
     const chunks: Buffer[] = [];
     if (initUri) {
-      const initData = await this.fetchBuffer(resolveUrl(initUri), true);
+      const initData = await this.fetchBuffer(resolveUrl(initUri), cdHeaders);
       chunks.push(initData);
     }
 
     for (const line of lines) {
       if (line.startsWith('#')) continue;
       const segUrl = resolveUrl(line);
-      const data = await this.fetchBuffer(segUrl, true);
+      const data = await this.fetchBuffer(segUrl, cdHeaders);
       chunks.push(data);
     }
 
@@ -301,11 +310,6 @@ class DailymotionService {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(outputPath, Buffer.concat(chunks));
-  }
-
-  private async getTitle(videoId: string): Promise<string> {
-    const meta = await this.fetchJson(`${METADATA_API}/${videoId}`);
-    return meta.title || `dailymotion_${videoId}`;
   }
 }
 
