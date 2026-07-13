@@ -13,9 +13,13 @@ const SUPPORTED_PLATFORMS: Record<string, string> = {
   'reddit.com': 'reddit',
   'pinterest.com': 'pinterest',
   'pin.it': 'pinterest',
-  'threads.com': 'threads',
   'linkedin.com': 'linkedin',
-  'kick.com': 'kick',
+  'open.spotify.com': 'spotify',
+  'music.apple.com': 'apple_music',
+  'spotify.com': 'spotify',
+  'deezer.com': 'deezer',
+  'music.youtube.com': 'youtube_music',
+  'bandlab.com': 'bandlab',
 };
 
 export function detectPlatform(url: string): string {

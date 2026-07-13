@@ -259,6 +259,34 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
       });
     }
 
+    if (platform === 'linkedin' && platformVideoFormats.length === 0) {
+      const linkedinFormats = data.formats.filter((f: YtDlpFormat) =>
+        f.vcodec != null && f.vcodec !== 'none' && f.vcodec !== '' &&
+        f.acodec != null && f.acodec !== 'none' && f.acodec !== ''
+      );
+      platformVideoFormats = linkedinFormats
+        .map((f: YtDlpFormat): VideoFormat => ({
+          id: f.format_id,
+          quality: f.height ? `${f.height}p` : (f.tbr ? `${Math.round(f.tbr)}k` : 'auto'),
+          ext: 'mp4',
+          filesize: f.filesize ?? f.filesize_approx ?? null,
+        }))
+        .sort((a: VideoFormat, b: VideoFormat) => {
+          const aNum = parseInt(a.quality);
+          const bNum = parseInt(b.quality);
+          return bNum - aNum;
+        });
+    }
+
+    if (platform === 'linkedin' && audioFormats.length === 0 && platformVideoFormats.length > 0) {
+      audioFormats.push({
+        id: platformVideoFormats[0].id,
+        quality: '192kbps',
+        ext: 'mp4',
+        filesize: null,
+      });
+    }
+
     return {
       title: data.title,
       thumbnail: thumb,
