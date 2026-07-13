@@ -1,6 +1,7 @@
 const SUPPORTED_PLATFORMS: Record<string, string> = {
   'youtube.com': 'youtube',
   'youtu.be': 'youtube',
+  'music.youtube.com': 'youtube_music',
   'tiktok.com': 'tiktok',
   'instagram.com': 'instagram',
   'soundcloud.com': 'soundcloud',
@@ -13,13 +14,7 @@ const SUPPORTED_PLATFORMS: Record<string, string> = {
   'reddit.com': 'reddit',
   'pinterest.com': 'pinterest',
   'pin.it': 'pinterest',
-  'linkedin.com': 'linkedin',
-  'open.spotify.com': 'spotify',
-  'music.apple.com': 'apple_music',
-  'spotify.com': 'spotify',
-  'deezer.com': 'deezer',
-  'music.youtube.com': 'youtube_music',
-  'bandlab.com': 'bandlab',
+  'linkedin.com': 'linkedin'
 };
 
 export function detectPlatform(url: string): string {

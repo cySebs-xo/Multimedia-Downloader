@@ -259,12 +259,8 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
       });
     }
 
-    if (platform === 'linkedin' && platformVideoFormats.length === 0) {
-      const linkedinFormats = data.formats.filter((f: YtDlpFormat) =>
-        f.vcodec != null && f.vcodec !== 'none' && f.vcodec !== '' &&
-        f.acodec != null && f.acodec !== 'none' && f.acodec !== ''
-      );
-      platformVideoFormats = linkedinFormats
+    if (platform === 'linkedin' && platformVideoFormats.length === 0 && data.formats.length > 0) {
+      platformVideoFormats = data.formats
         .map((f: YtDlpFormat): VideoFormat => ({
           id: f.format_id,
           quality: f.height ? `${f.height}p` : (f.tbr ? `${Math.round(f.tbr)}k` : 'auto'),
