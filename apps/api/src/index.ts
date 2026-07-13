@@ -20,7 +20,7 @@ if (fs.existsSync(envPath)) {
 }
 
 const app = express();
-const PORT = parseInt(process.env.PORT || '3001', 10);
+const PORT = process.env.PORT || 3001;
 const TEMP_DIR = process.env.TEMP_DIR || './temp';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4321';
 
@@ -54,8 +54,8 @@ setInterval(() => {
 async function main() {
   await startWarpProxy();
 
-  app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`API running on 0.0.0.0:${PORT}`);
+  app.listen(PORT, () => {
+    logger.info(`API running on http://localhost:${PORT}`);
   });
 }
 
