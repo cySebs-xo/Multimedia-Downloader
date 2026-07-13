@@ -11,8 +11,11 @@ const SUPPORTED_PLATFORMS: Record<string, string> = {
   'twitter.com': 'twitter',
   'x.com': 'twitter',
   'reddit.com': 'reddit',
-  'dailymotion.com': 'dailymotion',
-  'dai.ly': 'dailymotion',
+  'pinterest.com': 'pinterest',
+  'pin.it': 'pinterest',
+  'threads.com': 'threads',
+  'linkedin.com': 'linkedin',
+  'kick.com': 'kick',
 };
 
 export function detectPlatform(url: string): string {
@@ -20,7 +23,7 @@ export function detectPlatform(url: string): string {
   for (const [domain, name] of Object.entries(SUPPORTED_PLATFORMS)) {
     if (hostname.endsWith(domain)) return name;
   }
-  return 'unknown';
+  return 'unknown :[';
 }
 
 export function isSupportedPlatform(url: string): boolean {

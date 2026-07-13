@@ -2,7 +2,6 @@ import type { Request, Response, NextFunction } from 'express';
 import { getMediaInfo as ytDlpGetMediaInfo } from '../services/ytDlpService';
 import { youtubeService } from '../services/youtubeService';
 import { instagramService } from '../services/instagramService';
-import { dailymotionService } from '../services/dailymotionService';
 import { isSupportedPlatform, detectPlatform } from '../services/platformService';
 import { logger } from '../utils/logger';
 import type { MediaInfo } from '../types/media';
@@ -50,28 +49,26 @@ export async function analyzeController(
     const platform = detectPlatform(url);
     logger.debug(`Analyzing URL: ${url} (platform: ${platform})`);
 
-    if (platform === 'twitch' || platform === 'facebook' || platform === 'twitter' || platform === 'soundcloud' || platform === 'youtube' || platform === 'instagram' || platform === 'tiktok' || platform === 'vimeo' || platform === 'dailymotion') {
+    if (platform === 'twitch' || platform === 'facebook' || platform === 'twitter' || platform === 'soundcloud' || platform === 'youtube' || platform === 'instagram' || platform === 'tiktok' || platform === 'vimeo' || platform === 'reddit') {
       const cached = getCached(url);
       if (cached) {
         res.json({ success: true, data: cached });
         return;
       }
     }
-
+ 
     let info;
 
     if (platform === 'youtube') {
       info = await youtubeService.getMediaInfo(url);
     } else if (platform === 'instagram') {
       info = await instagramService.getMediaInfo(url);
-    } else if (platform === 'dailymotion') {
-      info = await dailymotionService.getMediaInfo(url);
     } else {
       info = await ytDlpGetMediaInfo(url, platform);
       info.platform = platform;
     }
 
-    if (platform === 'twitch' || platform === 'facebook' || platform === 'twitter' || platform === 'soundcloud' || platform === 'youtube' || platform === 'instagram' || platform === 'tiktok' || platform === 'vimeo' || platform === 'dailymotion') {
+    if (platform === 'twitch' || platform === 'facebook' || platform === 'twitter' || platform === 'soundcloud' || platform === 'youtube' || platform === 'instagram' || platform === 'tiktok' || platform === 'vimeo' || platform === 'reddit') {
       setCache(url, info);
     }
 

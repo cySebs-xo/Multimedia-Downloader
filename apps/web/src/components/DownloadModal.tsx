@@ -113,8 +113,7 @@ export default function DownloadModal({ entry, onStartDownload, onCancelDownload
   function handleDownload() {
     if (!selectedFormat || !selectedFormatId || !selectedQuality) return;
 
-    const isDailymotion = entry.platform === 'dailymotion';
-    const formatId = target.type === 'video' && !isDailymotion
+    const formatId = target.type === 'video'
       ? `${selectedFormatId}+bestaudio/bestvideo[ext=${selectedFormat}]+bestaudio/best[ext=${selectedFormat}]/best`
       : selectedFormatId;
 

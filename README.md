@@ -105,7 +105,7 @@ Usan **yt-dlp** directamente tanto para análisis como para descarga, sin necesi
 | X (Twitter) | ☑ | ☑ | yt-dlp |
 | Twitch | ☑ | ☑ | yt-dlp |
 | Vimeo | ☑ | ☑ | yt-dlp |
-| Dailymotion | ☑ | ☑ | yt-dlp |
+| Reddit | ☑ | ☑ | yt-dlp |
 | SoundCloud | ☒ | ☑ | yt-dlp (solo audio) |
 
 ---
