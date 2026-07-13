@@ -46,7 +46,8 @@ class DailymotionService {
   }
 
   private extractVideoId(url: string): string {
-    const match = url.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/);
+    const match = url.match(/(?:dailymotion\.com|dai\.ly)\/video\/([a-zA-Z0-9]+)/)
+      || url.match(/dai\.ly\/([a-zA-Z0-9]+)/);
     if (!match) throw Object.assign(new Error('URL de Dailymotion no válida.'), { code: 'INVALID_URL' });
     return match[1];
   }

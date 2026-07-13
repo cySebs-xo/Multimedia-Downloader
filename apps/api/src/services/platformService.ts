@@ -12,6 +12,7 @@ const SUPPORTED_PLATFORMS: Record<string, string> = {
   'x.com': 'twitter',
   'reddit.com': 'reddit',
   'dailymotion.com': 'dailymotion',
+  'dai.ly': 'dailymotion',
 };
 
 export function detectPlatform(url: string): string {
