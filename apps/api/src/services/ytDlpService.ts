@@ -263,9 +263,9 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
       platformVideoFormats = data.formats
         .map((f: YtDlpFormat): VideoFormat => ({
           id: f.format_id,
-          quality: f.height ? `${f.height}p` : (!f.tbr ? 'auto' : f.tbr >= 2500 ? '1080p' : f.tbr >= 1000 ? '720p' : f.tbr >= 500 ? '480p' : '360p'),
+          quality: f.height ? `${f.height}p` : (f.tbr ? `${Math.round(f.tbr)}k` : 'auto'),
           ext: 'mp4',
-          filesize: f.filesize ?? f.filesize_approx ?? (f.tbr && data.duration ? Math.round(f.tbr * 1000 / 8 * data.duration) : null),
+          filesize: f.filesize ?? f.filesize_approx ?? null,
         }))
         .sort((a: VideoFormat, b: VideoFormat) => {
           const aNum = parseInt(a.quality);
@@ -275,12 +275,11 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
     }
 
     if (platform === 'linkedin' && audioFormats.length === 0 && platformVideoFormats.length > 0) {
-      const audioSize = data.duration ? Math.round(192 * 1000 / 8 * data.duration) : null;
       audioFormats.push({
         id: platformVideoFormats[0].id,
         quality: '192kbps',
         ext: 'mp4',
-        filesize: audioSize,
+        filesize: null,
       });
     }
 
