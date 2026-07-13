@@ -53,9 +53,9 @@ class DailymotionService {
   }
 
   private async fetchJson(url: string, headers: Record<string, string>): Promise<any> {
-    const { status, body } = await this.httpsGet(url, headers);
-    if (status !== 200) throw new Error(`Dailymotion API error (${url}): HTTP ${status}`);
-    return JSON.parse(body);
+    const resp = await fetch(url, { headers });
+    if (!resp.ok) throw new Error(`Dailymotion API error (${url}): HTTP ${resp.status}`);
+    return resp.json();
   }
 
   private httpsGet(url: string, headers: Record<string, string>): Promise<{ status: number; body: string; buffer: Buffer }> {
