@@ -99,12 +99,15 @@ Usan **yt-dlp** directamente tanto para análisis como para descarga, sin necesi
 | Plataforma | Video | Audio | Herramientas |
 |------------|-------|-------|-------|
 | YouTube | ☑ | ☑ | youtubei.js + yt-dlp fallback |
+| YT Music | ☑ | ☑ | youtubei.js + yt-dlp fallback |
 | Instagram | ☑ | ☑ | yt-dlp + WARP |
 | TikTok | ☑ | ☑ | yt-dlp |
 | Facebook | ☑ | ☑ | yt-dlp |
 | X (Twitter) | ☑ | ☑ | yt-dlp |
 | Twitch | ☑ | ☑ | yt-dlp |
 | Vimeo | ☑ | ☑ | yt-dlp |
+| Pinterest | ☑ | ☑ | yt-dlp |
+| Linkedin | ☑ | ☑ | yt-dlp |
 | Reddit | ☑ | ☑ | yt-dlp |
 | SoundCloud | ☒ | ☑ | yt-dlp (solo audio) |
 

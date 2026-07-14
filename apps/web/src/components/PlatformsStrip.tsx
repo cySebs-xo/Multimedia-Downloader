@@ -98,10 +98,191 @@ const PLATFORMS = [
     ),
   },
 ];
+import { useEffect, useRef } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
+import './PlatformsStrip.css';
+
+function ellipseAngles(count: number, rx: number, ry: number): number[] {
+  const N = 2000;
+  const tValues: number[] = new Array(N + 1);
+  const cumArcs: number[] = new Array(N + 1);
+  cumArcs[0] = 0;
+  tValues[0] = 0;
+
+  for (let i = 1; i <= N; i++) {
+    const t = (i * 2 * Math.PI) / N;
+    tValues[i] = t;
+    const dt = (2 * Math.PI) / N;
+    const prevT = tValues[i - 1];
+    const xd = -rx * Math.sin(prevT);
+    const yd = ry * Math.cos(prevT);
+    cumArcs[i] = cumArcs[i - 1] + Math.sqrt(xd * xd + yd * yd) * dt;
+  }
+
+  const totalArc = cumArcs[N];
+  const step = totalArc / count;
+  const result: number[] = [];
+  let idx = 0;
+
+  for (let i = 0; i < count; i++) {
+    const target = i * step;
+    while (idx < N - 1 && cumArcs[idx + 1] < target) idx++;
+    const frac = (target - cumArcs[idx]) / (cumArcs[idx + 1] - cumArcs[idx]);
+    const t = tValues[idx] + frac * (tValues[idx + 1] - tValues[idx]);
+    result.push((t * 180) / Math.PI);
+  }
+
+  return result;
+}
 
 export default function PlatformsStrip() {
   const { t } = useLanguage();
+  const ringRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ring = ringRef.current;
+    if (!ring) return;
+
+    const items = ring.querySelectorAll<HTMLDivElement>('.orbit-item');
+    const lineCores = ring.querySelectorAll<SVGLineElement>('.orbit-line-core');
+    const lineGlows = ring.querySelectorAll<SVGLineElement>('.orbit-line-glow');
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    let RX: number, RY: number;
+    if (isMobile) {
+      const idealRX = Math.round((window.innerWidth - 64) * 0.38 / 2);
+      RX = Math.max(45, Math.min(80, idealRX));
+      RY = 120;
+    } else {
+      RX = 240;
+      RY = 110;
+    }
+
+    const isStadium = RX > RY;
+
+    let setPositions: (offset: number) => void;
+    let tick: (() => void) | undefined;
+
+    if (isStadium) {
+      const semiWidth = RX - RY;
+      const topLen = 2 * semiWidth;
+      const rightLen = Math.PI * RY;
+      const botLen = 2 * semiWidth;
+      const leftLen = Math.PI * RY;
+      const totalLen = topLen + rightLen + botLen + leftLen;
+      const spacing = totalLen / items.length;
+      const baseArcs = Array.from({ length: items.length }, (_, i) => i * spacing);
+
+      const arcToPos = (arc: number) => {
+        const a = ((arc % totalLen) + totalLen) % totalLen;
+        if (a < topLen) return { x: -semiWidth + (a / topLen) * 2 * semiWidth, y: -RY };
+        if (a < topLen + rightLen) {
+          const angle = -Math.PI / 2 + ((a - topLen) / rightLen) * Math.PI;
+          return { x: semiWidth + RY * Math.cos(angle), y: RY * Math.sin(angle) };
+        }
+        if (a < topLen + rightLen + botLen) {
+          const t = (a - topLen - rightLen) / botLen;
+          return { x: semiWidth - t * 2 * semiWidth, y: RY };
+        }
+        const angle = Math.PI / 2 + ((a - topLen - rightLen - botLen) / leftLen) * Math.PI;
+        return { x: -semiWidth + RY * Math.cos(angle), y: RY * Math.sin(angle) };
+      };
+
+      setPositions = (offset: number) => {
+        items.forEach((item, i) => {
+          const arc = baseArcs[i] + offset;
+          const pos = arcToPos(arc);
+          const depth = 1 + 0.1 * (pos.y / RY);
+          item.style.transform = `translate(-50%,-50%) translate3d(${pos.x}px,${pos.y}px,0) scale(${depth})`;
+          item.style.zIndex = `${20 + Math.round(10 * (pos.y / RY))}`;
+          const sx = String(pos.x);
+          const sy = String(pos.y);
+          lineCores[i]?.setAttribute('x2', sx);
+          lineCores[i]?.setAttribute('y2', sy);
+          lineGlows[i]?.setAttribute('x2', sx);
+          lineGlows[i]?.setAttribute('y2', sy);
+        });
+      };
+
+      let progress = 0;
+      const STEP_PX = 0.7;
+      tick = () => {
+        progress = (progress + STEP_PX) % totalLen;
+        setPositions(progress);
+      };
+    } else {
+      const angles = ellipseAngles(items.length, RX, RY);
+
+      setPositions = (angle: number) => {
+        items.forEach((item, i) => {
+          const theta = angles[i];
+          const a = ((angle + theta) * Math.PI) / 180;
+          const x = RX * Math.cos(a);
+          const y = RY * Math.sin(a);
+          const depth = 1 + 0.1 * Math.sin(a);
+          item.style.transform = `translate(-50%,-50%) translate3d(${x}px,${y}px,0) scale(${depth})`;
+          item.style.zIndex = `${20 + Math.round(10 * Math.sin(a))}`;
+          const sx = String(x);
+          const sy = String(y);
+          lineCores[i]?.setAttribute('x2', sx);
+          lineCores[i]?.setAttribute('y2', sy);
+          lineGlows[i]?.setAttribute('x2', sx);
+          lineGlows[i]?.setAttribute('y2', sy);
+        });
+      };
+
+      let angle = 0;
+      const STEP = 0.17;
+      tick = () => {
+        angle = (angle + STEP) % 360;
+        setPositions(angle);
+      };
+    }
+
+    setPositions(0);
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let raf: number;
+    const loop = () => {
+      if (!ring.dataset.paused && tick) tick();
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
+
+  const handleTrackOver = (e: React.MouseEvent) => {
+    if (!canHover) return;
+    const itemEl = (e.target as HTMLElement).closest('.orbit-item');
+    const inItem = !!itemEl;
+    const ring = ringRef.current;
+    if (!ring) return;
+    ring.classList.toggle('has-hover', inItem);
+    ring.querySelectorAll('.orbit-line-glow, .orbit-line-core').forEach(l => l.classList.remove('dimmed'));
+    if (inItem) {
+      ring.dataset.paused = 'true';
+      const index = Array.from(ring.querySelectorAll('.orbit-item')).indexOf(itemEl as HTMLDivElement);
+      ring.querySelectorAll('.orbit-line-glow').forEach((l, i) => {
+        if (i !== index) l.classList.add('dimmed');
+      });
+      ring.querySelectorAll('.orbit-line-core').forEach((l, i) => {
+        if (i !== index) l.classList.add('dimmed');
+      });
+    } else {
+      delete ring.dataset.paused;
+    }
+  };
+
+  const handleTrackLeave = () => {
+    const ring = ringRef.current;
+    if (!ring) return;
+    ring.classList.remove('has-hover');
+    delete ring.dataset.paused;
+    ring.querySelectorAll('.orbit-line-glow, .orbit-line-core').forEach(l => l.classList.remove('dimmed'));
+  };
+
   return (
     <section style={{
       width: '100%',
@@ -111,10 +292,10 @@ export default function PlatformsStrip() {
       <div style={{
         backgroundColor: 'var(--bg-secondary)',
         border: '1px solid var(--border)',
-
         padding: '2.5rem 2rem',
         maxWidth: '900px',
         margin: '0 auto',
+        overflow: 'hidden',
       }}>
         <p style={{
           fontFamily: '"Black Ops One", cursive',
@@ -138,76 +319,37 @@ export default function PlatformsStrip() {
           {t.platformsSubtitle}
         </p>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-        }}>
-          {PLATFORMS.map((p, i) => (
-            <div
-              key={p.name}
-              style={{
-                flex: '1 1 0',
-                minWidth: '80px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '0.75rem 1.25rem',
-                borderRight: i < PLATFORMS.length - 1
-                  ? '1px solid var(--border)'
-                  : 'none',
-              }}
-              className="platform-item"
-            >
-              <div
-                className="platform-icon-wrap"
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                {p.svg}
-              </div>
-
-              <span style={{
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.72rem',
-                color: 'var(--text-muted)',
-                textAlign: 'center',
-                whiteSpace: 'nowrap',
-              }}>
-                {p.name}
-              </span>
-            </div>
-          ))}
+        <div className="orbit-track" onMouseOver={handleTrackOver} onMouseLeave={handleTrackLeave}>
+          <div className="orbit-ring" ref={ringRef}>
+            {PLATFORMS.map((p, i) => {
+              return (
+                <div
+                  key={p.name}
+                  className="orbit-item"
+                >
+                  <div className="orbit-icon">{p.svg}</div>
+                  <span>{p.name}</span>
+                </div>
+              );
+            })}
+            <svg className="orbit-svg" viewBox="-300 -200 600 400">
+              {PLATFORMS.map((_, i) => (
+                <g key={i}>
+                  <line className="orbit-line-glow" x1={0} y1={0} x2={0} y2={0} />
+                  <line className="orbit-line-core" x1={0} y1={0} x2={0} y2={0} />
+                </g>
+              ))}
+              <circle cx={0} cy={0} r={12} fill="none" stroke="var(--text-secondary)" strokeWidth={1} strokeDasharray="2 3" opacity={0.35} />
+              <circle cx={0} cy={0} r={14} fill="none" stroke="var(--text-secondary)" strokeWidth={1.5} className="orbit-center-pulse" />
+              <circle cx={0} cy={0} r={7} fill="var(--accent)" />
+              <g transform="translate(0, 1)">
+                <path d="M-3.5,-2.5 L0,2.5 L3.5,-2.5" stroke="#fff" strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1={0} y1={-5.5} x2={0} y2={2.5} stroke="#fff" strokeWidth={1.8} strokeLinecap="round" />
+                <line x1={-5} y1={4} x2={5} y2={4} stroke="#fff" strokeWidth={1.8} strokeLinecap="round" />
+              </g>
+            </svg>
+          </div>
         </div>
-
-        <style>{`
-          .platform-icon-wrap {
-            transition: transform 0.2s ease;
-          }
-          @media (hover: hover) {
-            .platform-icon-wrap:hover {
-              transform: scale(1.3);
-            }
-          }
-          @media (max-width: 640px) {
-            .platform-item {
-              flex: 1 1 calc(33.33% - 2px) !important;
-              min-width: 0 !important;
-              padding: 0.75rem 0.5rem !important;
-              border: 1px solid var(--border) !important;
-              margin: -0.5px !important;
-            }
-            .platform-item span { white-space: normal !important; }
-          }
-        `}</style>
       </div>
     </section>
   );
