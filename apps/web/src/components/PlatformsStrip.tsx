@@ -149,9 +149,9 @@ export default function PlatformsStrip() {
     const isMobile = window.matchMedia('(max-width: 640px)').matches;
     let RX: number, RY: number;
     if (isMobile) {
-      const idealRX = Math.round((window.innerWidth - 64) * 0.38 / 2);
-      RX = Math.max(60, Math.min(95, idealRX));
-      RY = 120;
+      const idealRX = Math.round((window.innerWidth - 44) * 0.55 / 2);
+      RX = Math.max(60, Math.min(180, idealRX));
+      RY = 110;
     } else {
       RX = 240;
       RY = 110;
