@@ -150,7 +150,7 @@ export default function PlatformsStrip() {
     let RX: number, RY: number;
     if (isMobile) {
       const idealRX = Math.round((window.innerWidth - 64) * 0.38 / 2);
-      RX = Math.max(45, Math.min(80, idealRX));
+      RX = Math.max(60, Math.min(95, idealRX));
       RY = 120;
     } else {
       RX = 240;

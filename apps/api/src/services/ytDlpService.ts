@@ -283,6 +283,15 @@ export async function getMediaInfo(url: string, platform: string): Promise<Media
       });
     }
 
+    if (platform === 'pinterest' && audioFormats.length === 0 && platformVideoFormats.length > 0) {
+      audioFormats.push({
+        id: platformVideoFormats[0].id,
+        quality: '192kbps',
+        ext: 'mp4',
+        filesize: null,
+      });
+    }
+
     return {
       title: data.title,
       thumbnail: thumb,
